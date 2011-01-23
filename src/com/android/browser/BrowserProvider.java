@@ -152,8 +152,7 @@ public class BrowserProvider extends ContentProvider {
     // 20 -> 21 Added touch_icon
     // 21 -> 22 Remove "clientid"
     // 22 -> 23 Added user_entered
-    // 23 -> 24 Url not allowed to be null anymore.
-    private static final int DATABASE_VERSION = 24;
+    private static final int DATABASE_VERSION = 23;
 
     // Regular expression which matches http://, followed by some stuff, followed by
     // optionally a trailing slash, all matched as separate groups.
@@ -233,7 +232,7 @@ public class BrowserProvider extends ContentProvider {
             db.execSQL("CREATE TABLE bookmarks (" +
                     "_id INTEGER PRIMARY KEY," +
                     "title TEXT," +
-                    "url TEXT NOT NULL," +
+                    "url TEXT," +
                     "visits INTEGER," +
                     "date LONG," +
                     "created LONG," +
@@ -285,27 +284,6 @@ public class BrowserProvider extends ContentProvider {
             }
             if (oldVersion < 23) {
                 db.execSQL("ALTER TABLE bookmarks ADD COLUMN user_entered INTEGER;");
-            }
-            if (oldVersion < 24) {
-                /* SQLite does not support ALTER COLUMN, hence the lengthy code. */
-                db.execSQL("DELETE FROM bookmarks WHERE url IS NULL;");
-                db.execSQL("ALTER TABLE bookmarks RENAME TO bookmarks_temp;");
-                db.execSQL("CREATE TABLE bookmarks (" +
-                        "_id INTEGER PRIMARY KEY," +
-                        "title TEXT," +
-                        "url TEXT NOT NULL," +
-                        "visits INTEGER," +
-                        "date LONG," +
-                        "created LONG," +
-                        "description TEXT," +
-                        "bookmark INTEGER," +
-                        "favicon BLOB DEFAULT NULL," +
-                        "thumbnail BLOB DEFAULT NULL," +
-                        "touch_icon BLOB DEFAULT NULL," +
-                        "user_entered INTEGER" +
-                        ");");
-                db.execSQL("INSERT INTO bookmarks SELECT * FROM bookmarks_temp;");
-                db.execSQL("DROP TABLE bookmarks_temp;");
             } else {
                 db.execSQL("DROP TABLE IF EXISTS bookmarks");
                 db.execSQL("DROP TABLE IF EXISTS searches");

@@ -17,15 +17,12 @@
 package com.android.browser;
 
 import android.content.ContentValues;
-import android.net.Proxy;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpHead;
-import org.apache.http.conn.params.ConnRouteParams;
 
 import java.io.IOException;
 
@@ -47,7 +44,7 @@ import android.webkit.URLUtil;
  * android.os.webkit.LoadListener rather than handling it here.
  *
  */
-class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
+class FetchUrlMimeType extends AsyncTask<ContentValues, String, String> {
 
     BrowserActivity mActivity;
     ContentValues mValues;
@@ -57,7 +54,7 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
     }
 
     @Override
-    public ContentValues doInBackground(ContentValues... values) {
+    public String doInBackground(ContentValues... values) {
         mValues = values[0];
 
         // Check to make sure we have a URI to download
@@ -70,10 +67,6 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
         // seems ok with that.
         AndroidHttpClient client = AndroidHttpClient.newInstance(
                 mValues.getAsString(Downloads.Impl.COLUMN_USER_AGENT));
-        HttpHost httpHost = Proxy.getPreferredHttpHost(mActivity, uri);
-        if (httpHost != null) {
-            ConnRouteParams.setDefaultProxy(client.getParams(), httpHost);
-        }
         HttpHead request = new HttpHead(uri);
 
         String cookie = mValues.getAsString(Downloads.Impl.COLUMN_COOKIE_DATA);
@@ -87,7 +80,7 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
         }
 
         HttpResponse response;
-        ContentValues result = new ContentValues();
+        String mimeType = null;
         try {
             response = client.execute(request);
             // We could get a redirect here, but if we do lets let
@@ -96,16 +89,11 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
             if (response.getStatusLine().getStatusCode() == 200) {
                 Header header = response.getFirstHeader("Content-Type");
                 if (header != null) {
-                    String mimeType = header.getValue();
+                    mimeType = header.getValue();
                     final int semicolonIndex = mimeType.indexOf(';');
                     if (semicolonIndex != -1) {
                         mimeType = mimeType.substring(0, semicolonIndex);
                     }
-                    result.put("Content-Type", mimeType);
-                }
-                Header contentDispositionHeader = response.getFirstHeader("Content-Disposition");
-                if (contentDispositionHeader != null) {
-                    result.put("Content-Disposition", contentDispositionHeader.getValue());
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -116,13 +104,11 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
             client.close();
         }
 
-        return result;
+        return mimeType;
     }
 
    @Override
-    public void onPostExecute(ContentValues values) {
-       final String mimeType = values.getAsString("Content-Type");
-       final String contentDisposition = values.getAsString("Content-Disposition");
+    public void onPostExecute(String mimeType) {
        if (mimeType != null) {
            String url = mValues.getAsString(Downloads.Impl.COLUMN_URI);
            if (mimeType.equalsIgnoreCase("text/plain") ||
@@ -135,7 +121,7 @@ class FetchUrlMimeType extends AsyncTask<ContentValues, String, ContentValues> {
                }
            }
            String filename = URLUtil.guessFileName(url,
-                   contentDisposition, mimeType);
+                   null, mimeType);
            mValues.put(Downloads.Impl.COLUMN_FILE_NAME_HINT, filename);
        }
 
