@@ -1378,7 +1378,7 @@ public class BrowserActivity extends Activity
                     /* Need to open new tab before removing or you will
                      * get an FC.
                      */
-                    Tab t = openTab(mSettings.getHomePage());
+                    Tab t = openTabToHomePage();
                     int i;
                     for (i=0;i<mTabControl.getTabCount()-1;i++){
                         /*
@@ -1394,7 +1394,7 @@ public class BrowserActivity extends Activity
                     /* Need to open new tab before removing or you will
                      * get an FC.
                      */
-                    Tab t = openTab(mSettings.getHomePage());
+                    Tab t = openTabToHomePage();
                     int i;
                     for (i=0;i<mTabControl.getTabCount()-1;i++){
                         mTabControl.removeTab(mTabControl.getTab(i));
@@ -1821,6 +1821,10 @@ public class BrowserActivity extends Activity
                                                   ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
+		if (mTitleBar.getParent() != null) {
+			ViewGroup removeFrom = (ViewGroup)mTitleBar.getParent();
+			removeFrom.removeView(mTitleBar);
+		}
         WebView view = t.getWebView();
         view.setEmbeddedTitleBar(mTitleBar);
         if (t.isInVoiceSearchMode()) {
