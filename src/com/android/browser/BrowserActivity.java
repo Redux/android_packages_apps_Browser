@@ -48,10 +48,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
-import java.net.InetAddress;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import java.net.UnknownHostException;
 import android.net.WebAddress;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
@@ -148,9 +146,6 @@ public class BrowserActivity extends Activity
     private final static boolean LOGV_ENABLED = com.android.browser.Browser.LOGV_ENABLED;
     private final static boolean LOGD_ENABLED = com.android.browser.Browser.LOGD_ENABLED;
 
-    final static int MAX_HISTORY_URLS_TO_BE_FETCHED = 10;
-    final static String DATABASE_HISTORY_PREFETCH_CLAUSE = "visits DESC";
-
     private static class ClearThumbnails extends AsyncTask<File, Void, Void> {
         @Override
         public Void doInBackground(File... files) {
@@ -170,39 +165,35 @@ public class BrowserActivity extends Activity
      * error console, the custom view container, and the webviews.
      */
     private FrameLayout mBrowserFrameLayout;
-
-    private boolean isIncognito = false;
-    private long incognitoStartTime = 0;
-
-    public boolean getIncognito(){
-        return this.isIncognito;
-    }
-
-    public void setIncognito(boolean incognito){
-
-        /* Stop everything from loading */
-        mTabControl.stopAllLoading();
-
-        /* Set activity to incognito mode */
-        this.isIncognito = incognito;
-
-        /* Set title bar icon */
-        mTitleBar.setIncognito(incognito);
-        mFakeTitleBar.setIncognito(incognito);
-
-        if (incognito){
-            CookieSyncManager.getInstance().stopSync();
-            incognitoStartTime = System.currentTimeMillis();
-            mTitleBar.setTitleHint("Private Browsing");
-            mFakeTitleBar.setTitleHint("Private Browsing");
-        }else{
-            CookieSyncManager.getInstance().clearRamCache(incognitoStartTime);
-            CookieSyncManager.getInstance().startSync();
-            incognitoStartTime = 0;
-            mTitleBar.setTitleHint("Standard Browsing");
-            mFakeTitleBar.setTitleHint("Standard Browsing");
-        }
-    }
+		
+	private boolean isIncognito = false;
+	private long incognitoStartTime = 0;
+		
+	public boolean getIncognito() {
+		return this.isIncognito;
+	}
+		
+	public void setIncognito(boolean incognito) {
+		mTabControl.stopAllLoading();
+		
+		this.isIncognito = incognito;
+			
+		mTitleBar.setIncognito(incognito);
+		mFakeTitleBar.setIncognito(incognito);
+			
+		if (incognito) {
+			CookieSyncManager.getInstance().stopSync();
+			incognitoStartTime = System.currentTimeMillis();
+			mTitleBar.setTitleHint("Private browsing");
+			mFakeTitleBar.setTitleHint("Private browsing");
+		} else {
+			CookieSyncManager.getInstance().clearRamCache(incognitoStartTime);
+			CookieSyncManager.getInstance().startSync();
+			incognitoStartTime = 0;
+			mTitleBar.setTitleHint("Standard browsing");
+			mFakeTitleBar.setTitleHint("Standard browsing");
+		}
+	}
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -260,7 +251,6 @@ public class BrowserActivity extends Activity
         // Open the icon database and retain all the bookmark urls for favicons
         retainIconsOnStartup();
 
-        // Keep a settings instance handy.
         mSettings.setTabControl(mTabControl);
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -414,32 +404,6 @@ public class BrowserActivity extends Activity
         mSystemAllowGeolocationOrigins
                 = new SystemAllowGeolocationOrigins(getApplicationContext());
         mSystemAllowGeolocationOrigins.start();
-        prefetchDnsForHistoryUrls();
-    }
-
-    private void prefetchDnsForHistoryUrls() {
-/*        final Runnable getDnsResolution = new Runnable() {
-            public void run() {
-                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-                String[] urls = Browser.getVisitedHistoryByOrder(getContentResolver(), DATABASE_HISTORY_PREFETCH_CLAUSE, MAX_HISTORY_URLS_TO_BE_FETCHED);
-                for(int i=0; i< urls.length; i++) {
-                    try {
-                        if(urls[i] != null) {
-                            URL tmpUrl = new URL(urls[i]);
-                            if(tmpUrl.getProtocol().startsWith("http:") || tmpUrl.getProtocol().startsWith("https:") )
-                                java.net.InetAddress.getByName(tmpUrl.getHost());
-                            tmpUrl = null;
-                        }
-                    }catch(UnknownHostException e) {
-                    }catch(MalformedURLException e1) {
-                        e1.printStackTrace();
-                    }
-                }
-            }
-        };
-        Thread dnsPrefetch = new Thread(getDnsResolution);
-        dnsPrefetch.setName("History DNS resolver");
-        dnsPrefetch.start(); */
     }
 
     /**
@@ -665,7 +629,7 @@ public class BrowserActivity extends Activity
 
         final ContentResolver cr = mResolver;
         final String newUrl = url;
-		// Do not add to visited site history if Incognito mode is enabled
+		
 		if (!getIncognito()) {
 			new AsyncTask<Void, Void, Void>() {
 				protected Void doInBackground(Void... unused) {
@@ -676,7 +640,6 @@ public class BrowserActivity extends Activity
 			}.execute();
 		}
 
-        if(mSettings == null) return false;
         SearchEngine searchEngine = mSettings.getSearchEngine();
         if (searchEngine == null) return false;
         searchEngine.startSearch(this, url, appData, extraData);
@@ -722,7 +685,6 @@ public class BrowserActivity extends Activity
                     url = smartUrlFilter(url);
                     final ContentResolver cr = mResolver;
                     final String newUrl = url;
-					// Do not add to visited site history if Incognito mode is enabled
 					if (!getIncognito()) {
 						new AsyncTask<Void, Void, Void>() {
 							protected Void doInBackground(Void... unused) {
@@ -816,7 +778,7 @@ public class BrowserActivity extends Activity
         registerReceiver(mNetworkStateIntentReceiver,
                          mNetworkStateChangedFilter);
         WebView.enablePlatformNotifications();
-        toggleNotificationBar(!mSettings.isFullScreen());
+		toggleNotificationBar(!mSettings.isFullScreen());
     }
 
     /**
@@ -1015,6 +977,10 @@ public class BrowserActivity extends Activity
         // unregister network state listener
         unregisterReceiver(mNetworkStateIntentReceiver);
         WebView.disablePlatformNotifications();
+
+        if (mCustomView != null) {
+            mTabControl.getCurrentWebView().getWebChromeClient().onHideCustomView();
+        }
     }
 
     @Override
@@ -1254,7 +1220,6 @@ public class BrowserActivity extends Activity
             appSearchData = createGoogleSearchSourceBundle(GOOGLE_SEARCH_SOURCE_TYPE);
         }
 
-        if(mSettings == null) return;
         SearchEngine searchEngine = mSettings.getSearchEngine();
         if (searchEngine != null && !searchEngine.supportsVoiceSearch()) {
             appSearchData.putBoolean(SearchManager.DISABLE_VOICE_SEARCH, true);
@@ -1376,37 +1341,26 @@ public class BrowserActivity extends Activity
             case R.id.new_tab_menu_id:
                 openTabToHomePage();
                 break;
-
-            case R.id.incog_tab_menu_id:
-                if(!getIncognito()){
-                    item.setTitle(R.string.dis_incog_tab);
-                    this.setIncognito(true);
-                    /* Need to open new tab before removing or you will
-                     * get an FC.
-                     */
-                    Tab t = openTabToHomePage();
-                    int i;
-                    for (i=0;i<mTabControl.getTabCount()-1;i++){
-                        /*
-                         * TODO: Store in stack/list to restore when switching
-                         * back to regular browser mode.
-                         */
-
-                        mTabControl.removeTab(mTabControl.getTab(i));
-                    }
-                }else{
-                    item.setTitle(R.string.incog_tab);
-                    this.setIncognito(false);
-                    /* Need to open new tab before removing or you will
-                     * get an FC.
-                     */
-                    Tab t = openTabToHomePage();
-                    int i;
-                    for (i=0;i<mTabControl.getTabCount()-1;i++){
-                        mTabControl.removeTab(mTabControl.getTab(i));
-                    }
-                }
-                break;
+				
+			case R.id.incog_tab_menu_id:
+				if (!getIncognito()) {
+					item.setTitle(R.string.dis_incog_tab);
+					this.setIncognito(true);
+					
+					Tab t = openTabToHomePage();
+					for (int i = 0; i < mTabControl.getTabCount()-1; i++) {
+						mTabControl.removeTab(mTabControl.getTab(i));
+					}
+				} else {
+					item.setTitle(R.string.incog_tab);
+					this.setIncognito(false);
+					
+					Tab t = openTabToHomePage();
+					for (int i = 0; i < mTabControl.getTabCount()-1; i++) {
+						mTabControl.removeTab(mTabControl.getTab(i));
+					}
+				}
+				break;
 
             case R.id.goto_menu_id:
                 editUrl();
@@ -2413,10 +2367,6 @@ public class BrowserActivity extends Activity
                                         getString(
                                         R.string.choosertitle_sharevia));
                             }
-                            // close the cursor after its used
-                            if (c != null) {
-                                c.close();
-                            }
                             break;
                         case R.id.copy_link_context_menu_id:
                             copy(url);
@@ -2881,7 +2831,6 @@ public class BrowserActivity extends Activity
     void onHideCustomView() {
         if (mCustomView == null)
             return;
-
         // Hide the custom view.
         mCustomView.setVisibility(View.GONE);
         // Remove the custom view from its container.
@@ -3761,17 +3710,16 @@ public class BrowserActivity extends Activity
         }
         return null;
     }
-    
-    private void toggleNotificationBar(boolean showBar) {
-        if (showBar) {            
-            mTabControl.getBrowserActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-            mTabControl.getBrowserActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
-        else {
-            mTabControl.getBrowserActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            mTabControl.getBrowserActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        }
-    }
+
+	private void toggleNotificationBar(boolean showBar) {
+		if (showBar) {
+			mTabControl.getBrowserActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+			mTabControl.getBrowserActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		} else {
+			mTabControl.getBrowserActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			mTabControl.getBrowserActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+		}
+	}
 
     protected static final Pattern ACCEPTED_URI_SCHEMA = Pattern.compile(
             "(?i)" + // switch on case insensitive matching

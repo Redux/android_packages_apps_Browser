@@ -34,15 +34,7 @@
                 android:defaultValue="MEDIUM"
                 android:entries="@array/pref_default_zoom_choices"
                 android:entryValues="@array/pref_default_zoom_values"
-                android:dialogTitle="@string/pref_default_zoom_dialogtitle" /> 
-                
-        <ListPreference
-                android:key="user_agent"
-                android:title="@string/pref_user_agent_title"
-                android:defaultValue="0"
-                android:entries="@array/pref_user_agent"
-                android:entryValues="@array/pref_user_agent_values"
-                android:dialogTitle="@string/pref_user_agent_dialog" /> 
+                android:dialogTitle="@string/pref_default_zoom_dialogtitle" />
                 
         <CheckBoxPreference
                 android:key="show_zoom_controls"
@@ -53,8 +45,7 @@
                 android:key="full_screen_mode"
                 android:defaultValue="false"
                 android:title="@string/pref_full_screen_mode" />
-                
-                
+
         <CheckBoxPreference
                 android:key="load_page"
                 android:defaultValue="true"
@@ -210,6 +201,14 @@
     </PreferenceCategory>
     <PreferenceCategory
             android:title="@string/pref_extras_title">
+            
+            <ListPreference
+                android:title="@string/pref_select_user_agent"
+                android:key="user_agent"
+                android:defaultValue="0"
+                android:entries="@array/pref_development_ua_choices"
+                android:entryValues="@array/pref_development_ua_values"
+                android:dialogTitle="@string/pref_select_user_agent" />
 
             <!-- Entries and values in this list are set dynamically. -->
             <com.android.browser.search.SearchEnginePreference
